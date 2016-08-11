@@ -1,0 +1,4 @@
+home=http://www.tarsnap.com/scrypt.html
+git=https://github.com/Tarsnap/scrypt.git
+pkg=http://www.tarsnap.com/scrypt/scrypt-1.2.0.tgz
+pkg_sha256=1754bc89405277c8ac14220377a4c240ddc34b1ce70882aa92cd01bfdc8569d4
