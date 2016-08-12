@@ -4,20 +4,18 @@ module Main where
 import Foreign.C.Types
 import Foreign.C.String
 import Foreign.Ptr
+import Types as T
 
-foreign import ccall "getVersion3" c_getVersion3 :: CUInt
 foreign import ccall "mpw_masterKeyForUser" c_mpw_masterKeyForUser :: CString -> CString -> CUInt -> Ptr CUChar
-foreign import ccall "getLongSiteType" c_getLongSiteType :: CUInt
-foreign import ccall "getPasswordVariant" c_getPasswordVariant :: CUInt
 foreign import ccall "mpw_passwordForSite"
   c_mpw_passwordForSite :: Ptr CUChar -> CString -> CUInt -> CUInt -> CUInt -> CString -> CUInt -> CString
 
 
 main :: IO ()
 main = do
-  let v3 = c_getVersion3
-  let plong = c_getLongSiteType
-  let ppass = c_getPasswordVariant
+  let v3 = T.algorithmToEnum T.Version3
+  let plong = T.siteTypeToEnum T.Long
+  let ppass = T.siteVariantToEnum T.Password
   name <- newCString "Alec S"
   masterPassword <- newCString "hellopwd"
   siteName <- newCString "google.com"
