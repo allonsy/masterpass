@@ -1,4 +1,4 @@
-module Types where
+module Cryptography.MasterPassword.Types where
 
 import Foreign.C.Types
 

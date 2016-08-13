@@ -74,3 +74,7 @@ unsigned int getStoredPersonalSiteType() {
 unsigned int getStoredDevicePrivateSiteType() {
   return MPSiteTypeStoredDevicePrivate;
 }
+
+unsigned int getMPdkLen() {
+  return MP_dkLen;
+}
