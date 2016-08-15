@@ -72,6 +72,7 @@ data SiteVariant =
   Password |
   Login    |
   Answer
+  deriving (Show, Read)
 
 defaultSiteVariant :: SiteVariant
 defaultSiteVariant = Password

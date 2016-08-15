@@ -5,7 +5,7 @@ import Cryptography.MasterPassword.Types as T
 import Cryptography.MasterPassword.Encode
 import Foreign.C.String
 import Foreign.Ptr
-
+import State
 
 
 main :: IO ()
