@@ -11,8 +11,6 @@ import State
 import Generate
 import System.Directory
 import System.Exit
-import Text.Read
-import Data.List
 import Data.Maybe
 import Data.Char
 
@@ -69,30 +67,12 @@ runMenu st mkey = do
         ":q" -> putStrLn "Quitting" >> return st
         _ -> putStrLn "command not found" >> runMenu st mkey
 
-listPwd :: ManageState -> IO ()
-listPwd st = do
-  enumeratePwds (passwords st) 1 where
-    enumeratePwds [] _ =  return ()
-    enumeratePwds (x:xs) k = putStrLn ((show k) ++ ") " ++ sitename x ) >> enumeratePwds xs (k+1)
-
 showPwd :: ManageState -> Ptr CUChar -> IO ()
 showPwd st mkey = do
-  putStrLn "Which password would you like to show?"
-  listPwd st
-  answer <- promptNonEmpty "Please enter the number or site name (or ':b' to return to the menu): "
-  if strip answer == ":b" then return ()
-  else do
-    case readMaybe answer :: Maybe Int of
-      Nothing -> do
-        let matchPassMaybe = find (\pass -> sitename pass == strip answer) (passwords st)
-        case matchPassMaybe of
-          Nothing -> putStrLn "Site not found" >> showPwd st mkey
-          Just pass -> showGivenPwd pass
-      Just k -> do
-        if k <= length (passwords st) then do
-          let pass = (passwords st) !! (k-1)
-          showGivenPwd pass
-        else putStrLn "index out of range" >> showPwd st mkey
+  passMaybe <- promptPassword "Which password would you like to show?" st
+  case passMaybe of
+    Nothing -> return ()
+    Just pass -> showGivenPwd pass
   where
     showGivenPwd pass = do
       if isJust (loginName pass) then
@@ -105,28 +85,16 @@ showPwd st mkey = do
 
 deletePwd :: ManageState -> IO ManageState
 deletePwd st = do
-  putStrLn "Which password would you like to delete"
-  listPwd st
-  answer <- promptNonEmpty "Please enter the number or site name (or ':b' to return to the menu): "
-  if strip answer == ":b" then return st
-  else do
-    case readMaybe answer :: Maybe Int of
-      Nothing -> do
-        let matchPassMaybe = find (\pass -> sitename pass == strip answer) (passwords st)
-        case matchPassMaybe of
-          Nothing -> putStrLn "Site not found" >> deletePwd st
-          Just pass -> delGivenPwd pass
-      Just k -> do
-        if k <= length (passwords st) then do
-          let pass = (passwords st) !! (k-1)
-          delGivenPwd pass
-        else putStrLn "index out of range" >> deletePwd st
+  passMaybe <- promptPassword "Which password would you like to delete" st
+  case passMaybe of
+    Nothing -> return st
+    Just pass -> delGivenPwd pass
   where
     delGivenPwd pass = do
       putStrLn $ "Are you sure you want to delete the password for site: " ++ (sitename pass)
       answer <- promptNonEmpty $ "y/n: "
       case map toLower (strip answer) of
-        "y" -> putStrLn "Deleted" >> return $ st {passwords = filter (/= pass) (passwords st)}
+        "y" -> putStrLn "Deleted" >> (return  (st {passwords = filter (/= pass) (passwords st)}) )
         "n" -> return st
         _   -> putStrLn "Input not understood. Please enter 'y' or 'n'" >> delGivenPwd pass
 
