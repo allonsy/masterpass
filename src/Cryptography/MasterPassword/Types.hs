@@ -30,7 +30,7 @@ data AlgorithmVersion =
   Version1 |
   Version2 |
   Version3
-  deriving (Show, Read)
+  deriving (Show, Read, Eq)
 
 algorithmToEnum :: AlgorithmVersion -> CUInt
 algorithmToEnum Version3 = c_getVersion3
@@ -53,7 +53,7 @@ data SiteType =
   Phrase  |
   StoredPersonal |
   StoredDevice
-  deriving (Show, Read)
+  deriving (Show, Read, Eq)
 
 defaultSiteType :: SiteType
 defaultSiteType = Long
@@ -75,7 +75,7 @@ data SiteVariant =
   Password |
   Login    |
   Answer
-  deriving (Show, Read)
+  deriving (Show, Read, Eq)
 
 defaultSiteVariant :: SiteVariant
 defaultSiteVariant = Password

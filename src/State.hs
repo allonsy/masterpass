@@ -26,7 +26,7 @@ data Password = Password {
   counter :: CounterType,
   context :: Maybe String,
   loginName :: Maybe String
-} deriving (Show, Read)
+} deriving (Show, Read, Eq)
 
 -- encodePassword takes in a master key and a password struct and returns
 -- the password for that Password
