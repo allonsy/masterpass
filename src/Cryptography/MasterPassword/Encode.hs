@@ -14,8 +14,6 @@ foreign import ccall "getMPdkLen" c_getMPdkLen :: CUInt
 foreign import ccall "mpw_freeString" c_mpw_freeString :: CString -> IO ()
 foreign import ccall "mpw_identicon" c_mpw_identicon :: CString -> CString -> CString
 
-type CounterType = Word32
-
 -- Generates Master key for a given user. It returns an array of unsigned chars for use
 -- in the encoding functions
 masterKeyForUser :: CString -> CString -> AlgorithmVersion -> Ptr CUChar

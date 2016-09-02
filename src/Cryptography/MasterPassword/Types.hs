@@ -1,6 +1,7 @@
 module Cryptography.MasterPassword.Types where
 
 import Foreign.C.Types
+import Data.Word
 
 foreign import ccall "getVersion3" c_getVersion3 :: CUInt
 foreign import ccall "getVersion2" c_getVersion2 :: CUInt
@@ -21,6 +22,8 @@ foreign import ccall "getStoredDevicePrivateSiteType" c_getStoredDevicePrivateSi
 foreign import ccall "getPasswordVariant" c_getPasswordVariant :: CUInt
 foreign import ccall "getLoginVariant" c_getLoginVariant :: CUInt
 foreign import ccall "getAnswerVariant" c_getAnswerVariant :: CUInt
+
+type CounterType = Word32
 
 data AlgorithmVersion =
   Version0 |

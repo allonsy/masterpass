@@ -10,6 +10,7 @@ import System.FilePath
 import System.Directory
 import System.IO
 
+
 data ManageState = ManageState {
   name :: String,
   version :: AlgorithmVersion,
@@ -22,7 +23,8 @@ data Password = Password {
   passType :: SiteType,
   passVariant :: SiteVariant,
   counter :: CounterType,
-  context :: Maybe String
+  context :: Maybe String,
+  loginName :: Maybe String
 } deriving (Show, Read)
 
 -- encodePassword takes in a master key and a password struct and returns
@@ -46,7 +48,7 @@ commitDB toSave db = do
   (tempPath, hand) <- openTempFile dir template
   hPutStr hand (show db)
   hClose hand
-  renamePath tempPath toSave
+  renameFile tempPath toSave
 
 -- reads in a db from a given file
 readDb :: String -> IO ManageState
