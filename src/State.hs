@@ -5,6 +5,7 @@ import Cryptography.MasterPassword.Encode
 import Foreign.C.String
 import Foreign.Ptr
 import Foreign.C.Types
+import Foreign.Marshal.Alloc
 import Data.Maybe
 import System.FilePath
 import System.Directory
@@ -37,6 +38,7 @@ encodePassword mkey pass = do
   let cpassword = passwordForSite mkey siteNamePtr (passType pass) (counter pass) (passVariant pass) contextPtr (passVersion pass)
   hpassword <- peekCString cpassword
   freePassword cpassword
+  free siteNamePtr
   return hpassword
 
 

@@ -24,7 +24,7 @@ promptNonEmpty :: String -> IO String
 promptNonEmpty p = do
   maybeResponse <- promptOnce p
   case maybeResponse of
-    Nothing -> putStrLn dontUnderstand >> promptNonEmpty p
+    Nothing -> exitSuccess >> return ""
     Just "" -> putStrLn "Your answer cannot be empty!" >> promptNonEmpty p
     Just val -> return val
 
