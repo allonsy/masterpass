@@ -51,7 +51,8 @@ runMenu st mkey = do
   case commandMaybe of
     Nothing -> putStrLn "Quitting" >> return st
     Just cmd -> do
-      case strip cmd of
+      let commands = words cmd
+      case head commands of
         ":c" -> do
           newST <- createPwd st mkey
           commitDB "mpass.db" newST
@@ -79,17 +80,27 @@ runMenu st mkey = do
           commitDB "mpass.db" newST
           runMenu newST mkey
         ":l" -> listPwd st >> putStrLn "" >> runMenu st mkey
-        ":s" -> showPwd st mkey >> putStrLn "" >> runMenu st mkey
+        ":s" -> do
+          if length commands > 1 then do
+            showSitePwd st mkey (commands !! 1)
+            putStrLn ""
+            runMenu st mkey
+          else
+            showPwd st mkey >> putStrLn "" >> runMenu st mkey
         ":i" -> do
-          newST <- incrementPwd st mkey
+          newST <- if length commands > 1 then incrementPwdSiteName st mkey (commands !! 1)
+          else incrementPwd st mkey
           commitDB "mpass.db" newST
           putStrLn ""
-          runMenu st mkey
+          runMenu newST mkey
         ":d" -> do
           newST <- deletePwd st
           commitDB "mpass.db" newST
           putStrLn ""
           runMenu newST mkey
+        ":h" -> do
+          showHelp
+          runMenu st mkey
         ":q" -> putStrLn "Quitting" >> return st
         _ -> putStrLn "command not found" >> runMenu st mkey
 
@@ -107,6 +118,19 @@ showPwd st mkey = do
         return ()
       sitepass <- encodePassword mkey pass
       putStrLn $ "Your password is: " ++ sitepass
+
+showSitePwd :: ManageState -> Ptr CUChar -> String -> IO ()
+showSitePwd st mkey site = do
+  let passMaybe = find (\p -> (sitename p) == site) (passwords st)
+  case passMaybe of
+    Nothing -> putStrLn $ "Site: " ++ site ++ " not found"
+    Just pass -> do
+      passwd <- encodePassword mkey pass
+      if isJust (loginName pass) then
+        putStrLn $ "Your username is: " ++ (fromJust (loginName pass))
+      else
+        return ()
+      putStrLn $ "Your password is: " ++ passwd
 
 
 deletePwd :: ManageState -> IO ManageState
@@ -143,18 +167,41 @@ incrementPwd st mkey = do
   passMaybe <- promptPassword "Which password would you like to increment" st
   case passMaybe of
     Nothing -> return st
-    Just pass -> do
-      confirm <- promptConfirm $ "Are you sure you want to increment site: " ++ sitename pass ++ "?"
-      if confirm then do
-        let newPass = pass {counter = (counter pass) + 1}
-        newPassword <- encodePassword mkey newPass
-        putStrLn $ "Your new password is: " ++ newPassword
-        let newPasswords = replace (passwords st) pass newPass
-        let newST = st {passwords = newPasswords}
-        return newST
-      else return st
+    Just pass -> incrementPwdSite st mkey pass
+
+incrementPwdSiteName :: ManageState -> Ptr CUChar -> String -> IO (ManageState)
+incrementPwdSiteName st mkey site = do
+  let passMaybe = find (\p -> (sitename p) == site) (passwords st)
+  case passMaybe of
+    Nothing -> putStrLn ("Site: " ++ site ++ " not found!") >> return st
+    Just pass -> incrementPwdSite st mkey pass
+
+incrementPwdSite :: ManageState -> Ptr CUChar -> Password -> IO (ManageState)
+incrementPwdSite st mkey pass = do
+  confirm <- promptConfirm $ "Are you sure you want to increment site: " ++ sitename pass ++ "?"
+  if confirm then do
+    let newPass = pass {counter = (counter pass) + 1}
+    newPassword <- encodePassword mkey newPass
+    putStrLn $ "Your new password is: " ++ newPassword
+    let newPasswords = replace (passwords st) pass newPass
+    let newST = st {passwords = newPasswords}
+    return newST
+  else return st
   where
     replace [] _ new = [new]
     replace (x:xs) old new
       | x == old = new : xs
       | otherwise = x: replace xs old new
+
+showHelp :: IO ()
+showHelp = do
+  putStrLn ":h -> Show this help menu"
+  putStrLn ":c -> create a new password"
+  putStrLn ":cname -> change your name"
+  putStrLn ":cmpw -> change your master password (rehash)"
+  putStrLn ":cver -> change the default version number"
+  putStrLn ":l -> list all of your passwords"
+  putStrLn ":s [sitename (optional)] -> show a password"
+  putStrLn ":d [sitename (optional)] -> delete a saved password"
+  putStrLn ":i [sitename (optional)] -> increment the site counter for a site"
+  putStrLn ":q -> save and quit"
