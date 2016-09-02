@@ -73,6 +73,11 @@ runMenu st mkey = do
           newVer <- promptVersion (version st)
           let newST = st {version = newVer}
           runMenu newST mkey
+        ":cname" -> do
+          newName <- promptNonEmpty "Please enter a new name: "
+          let newST = st {name = newName}
+          commitDB "mpass.db" newST
+          runMenu newST mkey
         ":l" -> listPwd st >> putStrLn "" >> runMenu st mkey
         ":s" -> showPwd st mkey >> putStrLn "" >> runMenu st mkey
         ":i" -> do
