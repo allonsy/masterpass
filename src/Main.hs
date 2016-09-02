@@ -55,6 +55,7 @@ runMenu st mkey = do
       case head commands of
         ":c" -> do
           newST <- createPwd st mkey
+          putStrLn ""
           commitDB "mpass.db" newST
           runMenu newST mkey
         ":cmpw" -> do
@@ -94,7 +95,8 @@ runMenu st mkey = do
           putStrLn ""
           runMenu newST mkey
         ":d" -> do
-          newST <- deletePwd st
+          newST <- if length commands > 1 then deleteSiteName st (commands !! 1)
+          else deletePwd st
           commitDB "mpass.db" newST
           putStrLn ""
           runMenu newST mkey
@@ -109,28 +111,23 @@ showPwd st mkey = do
   passMaybe <- promptPassword "Which password would you like to show?" st
   case passMaybe of
     Nothing -> return ()
-    Just pass -> showGivenPwd pass
-  where
-    showGivenPwd pass = do
-      if isJust (loginName pass) then
-        putStrLn $ "Your username is: " ++ (fromJust (loginName pass))
-      else
-        return ()
-      sitepass <- encodePassword mkey pass
-      putStrLn $ "Your password is: " ++ sitepass
+    Just pass -> showSite st mkey pass
 
 showSitePwd :: ManageState -> Ptr CUChar -> String -> IO ()
 showSitePwd st mkey site = do
   let passMaybe = find (\p -> (sitename p) == site) (passwords st)
   case passMaybe of
     Nothing -> putStrLn $ "Site: " ++ site ++ " not found"
-    Just pass -> do
-      passwd <- encodePassword mkey pass
-      if isJust (loginName pass) then
-        putStrLn $ "Your username is: " ++ (fromJust (loginName pass))
-      else
-        return ()
-      putStrLn $ "Your password is: " ++ passwd
+    Just pass -> showSite st mkey pass
+
+showSite :: ManageState -> Ptr CUChar -> Password -> IO ()
+showSite st mkey pass = do
+  passwd <- encodePassword mkey pass
+  if isJust (loginName pass) then
+    putStrLn $ "Your username is: " ++ (fromJust (loginName pass))
+  else
+    return ()
+  putStrLn $ "Your password is: " ++ passwd
 
 
 deletePwd :: ManageState -> IO ManageState
@@ -138,15 +135,22 @@ deletePwd st = do
   passMaybe <- promptPassword "Which password would you like to delete" st
   case passMaybe of
     Nothing -> return st
-    Just pass -> delGivenPwd pass
-  where
-    delGivenPwd pass = do
-      putStrLn $ "Are you sure you want to delete the password for site: " ++ (sitename pass)
-      answer <- promptNonEmpty $ "y/n: "
-      case map toLower (strip answer) of
-        "y" -> putStrLn "Deleted" >> (return  (st {passwords = delete pass (passwords st)}) )
-        "n" -> return st
-        _   -> putStrLn "Input not understood. Please enter 'y' or 'n'" >> delGivenPwd pass
+    Just pass -> deleteSite st pass
+
+deleteSite :: ManageState -> Password -> IO ManageState
+deleteSite st pass = delGivenPwd pass where
+  delGivenPwd pass = do
+    confirm <- promptConfirm $ "Are you sure you want to delete the password for site: " ++ (sitename pass)
+    if confirm then putStrLn "Deleted" >> (return  (st {passwords = delete pass (passwords st)}) )
+    else putStrLn "Input not understood. Please enter 'y' or 'n'" >> delGivenPwd pass
+
+deleteSiteName :: ManageState -> String -> IO ManageState
+deleteSiteName st site = do
+  let passMaybe = find (\p -> (sitename p) == site) (passwords st)
+  case passMaybe of
+    Nothing -> putStrLn ( "Site: " ++ site ++ " not found" ) >> return st
+    Just pass -> do
+      deleteSite st pass
 
 createPwd :: ManageState -> Ptr CUChar -> IO (ManageState)
 createPwd st mkey = do
@@ -158,6 +162,8 @@ createPwd st mkey = do
   count <- promptSiteCounter 1
   let newPassword = State.Password sname ver typ var count Nothing lname
   pwd <- encodePassword mkey newPassword
+  if isJust lname then putStrLn $ "Your new username is: " ++ (fromJust lname)
+  else return ()
   putStrLn $ "Your new password is: " ++ pwd
   let newST = st { passwords = newPassword : (passwords st)}
   return newST
