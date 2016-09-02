@@ -167,5 +167,17 @@ promptPassword p st = do
           return $ Just pass
         else putStrLn "index out of range" >> promptPassword p st
 
+promptConfirm :: String -> IO Bool
+promptConfirm p = do
+  putStrLn p
+  answer <- promptOnce "y/n [n]: "
+  case answer of
+    Nothing -> exitSuccess >> return False
+    Just "" -> return False
+    Just ans -> case map toLower (strip ans) of
+      "y" -> return True
+      "n" -> return False
+      _   -> putStrLn dontUnderstand >> promptConfirm p
+
 strip :: String -> String
 strip = filter (\c -> not (isSpace c))
