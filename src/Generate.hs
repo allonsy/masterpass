@@ -7,6 +7,7 @@ import Data.Char
 import Text.Read
 import State
 import Data.List
+import Data.Maybe
 
 dontUnderstand :: String
 dontUnderstand = "I didn't understand your answer, please try again!"
@@ -65,7 +66,7 @@ promptSiteCounter def = do
 
 promptSiteType :: SiteType -> IO SiteType
 promptSiteType def = do
-  putStrLn $ "Please enter a site type, the default is: " ++ show def
+  putStrLn $ "Please enter a site type"
   putStrLn "1) Maximum"
   putStrLn "2) Long"
   putStrLn "3) Medium"
@@ -107,7 +108,7 @@ promptSiteType def = do
 
 promptSiteVariant :: SiteVariant -> IO SiteVariant
 promptSiteVariant def = do
-  putStrLn $ "Please enter a site variant. The default is: " ++ show def
+  putStrLn $ "Please enter a site variant"
   putStrLn "1) Password"
   putStrLn "2) Login"
   putStrLn "3) Answer"
@@ -127,7 +128,8 @@ promptSiteVariant def = do
 
 promptLoginName :: Maybe String -> IO (Maybe String)
 promptLoginName def = do
-  lnameMaybe <- promptOnce "Please enter in a username (leave blank to not store the username): "
+  lnameMaybe <- if isJust def then promptOnce $ "Please enter a username [" ++ fromJust def ++ "]: "
+  else promptOnce "Please enter in a username (leave blank to not store the username): "
   case lnameMaybe of
     Nothing -> exitSuccess >> return Nothing
     Just "" -> return def
@@ -136,7 +138,8 @@ promptLoginName def = do
 
 promptSiteName :: Maybe String -> IO String
 promptSiteName def = do
-  snameMaybe <- promptOnce "Please enter in a sitename: "
+  snameMaybe <- if isJust def then promptOnce ("Please enter in a sitename [" ++ fromJust def ++ "]: ")
+    else promptOnce "Please enter in a sitename: "
   case snameMaybe of
     Nothing -> exitSuccess >> return ""
     Just "" -> case def of
