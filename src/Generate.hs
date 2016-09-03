@@ -125,21 +125,23 @@ promptSiteVariant def = do
         "answer" -> return Answer
         _ -> putStrLn dontUnderstand >> promptSiteVariant def
 
-promptLoginName :: IO (Maybe String)
-promptLoginName = do
+promptLoginName :: Maybe String -> IO (Maybe String)
+promptLoginName def = do
   lnameMaybe <- promptOnce "Please enter in a username (leave blank to not store the username): "
   case lnameMaybe of
     Nothing -> exitSuccess >> return Nothing
-    Just "" -> return Nothing
+    Just "" -> return def
     Just lname -> return $ Just lname
 
 
-promptSiteName :: IO String
-promptSiteName = do
+promptSiteName :: Maybe String -> IO String
+promptSiteName def = do
   snameMaybe <- promptOnce "Please enter in a sitename: "
   case snameMaybe of
     Nothing -> exitSuccess >> return ""
-    Just "" -> putStrLn "Site name cannot be empty" >> promptSiteName
+    Just "" -> case def of
+      Nothing -> putStrLn "Site name cannot be empty" >> promptSiteName def
+      Just sname -> return sname
     Just sname -> return sname
 
 listPwd :: ManageState -> IO ()

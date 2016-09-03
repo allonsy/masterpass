@@ -100,6 +100,16 @@ runMenu st mkey = do
           commitDB "mpass.db" newST
           putStrLn ""
           runMenu newST mkey
+        ":e" -> do
+          newST <- if length commands > 1 then editSiteByName st mkey (commands !! 1)
+          else editPwd st mkey
+          commitDB "mpass.db" newST
+          putStrLn ""
+          runMenu newST mkey
+        ":temp" -> do
+          if length commands > 1 then showTempPwd st mkey (commands !! 1)
+          else putStrLn "Please provide a site name"
+          runMenu st mkey
         ":h" -> do
           showHelp
           runMenu st mkey
@@ -154,8 +164,8 @@ deleteSiteName st site = do
 
 createPwd :: ManageState -> Ptr CUChar -> IO (ManageState)
 createPwd st mkey = do
-  sname <- promptSiteName
-  lname <- promptLoginName
+  sname <- promptSiteName Nothing
+  lname <- promptLoginName Nothing
   ver <- promptVersion (version st)
   typ <- promptSiteType defaultSiteType
   var <- promptSiteVariant defaultSiteVariant
@@ -193,11 +203,7 @@ incrementPwdSite st mkey pass = do
     let newST = st {passwords = newPasswords}
     return newST
   else return st
-  where
-    replace [] _ new = [new]
-    replace (x:xs) old new
-      | x == old = new : xs
-      | otherwise = x: replace xs old new
+
 
 showHelp :: IO ()
 showHelp = do
@@ -206,8 +212,51 @@ showHelp = do
   putStrLn ":cname -> change your name"
   putStrLn ":cmpw -> change your master password (rehash)"
   putStrLn ":cver -> change the default version number"
-  putStrLn ":l -> list all of your passwords"
+  putStrLn ":l -> list all of your saved passwords"
   putStrLn ":s [sitename (optional)] -> show a password"
   putStrLn ":d [sitename (optional)] -> delete a saved password"
+  putStrLn ":e [sitename (optional)] -> edit a saved site"
   putStrLn ":i [sitename (optional)] -> increment the site counter for a site"
+  putStrLn ":temp [sitename] -> generate (but don't save) a password with default settings for the given site name"
   putStrLn ":q -> save and quit"
+
+editPwd :: ManageState -> Ptr CUChar -> IO (ManageState)
+editPwd st mkey = do
+  passMaybe <- promptPassword "Which site would you like to edit" st
+  case passMaybe of
+    Nothing -> return st
+    Just pass -> editSite st mkey pass
+
+editSiteByName :: ManageState -> Ptr CUChar -> String -> IO (ManageState)
+editSiteByName st mkey site = do
+  let passMaybe = find (\p -> (sitename p) == site) (passwords st)
+  case passMaybe of
+    Nothing -> putStrLn ("Site: " ++ site ++ " not found!") >> return st
+    Just pass -> editSite st mkey pass
+
+editSite :: ManageState -> Ptr CUChar -> Password -> IO (ManageState)
+editSite st mkey pass = do
+  sname <- promptSiteName $ Just (sitename pass)
+  lname <- promptLoginName (loginName pass)
+  ver <- promptVersion (passVersion pass)
+  typ <- promptSiteType (passType pass)
+  var <- promptSiteVariant (passVariant pass)
+  count <- promptSiteCounter (counter pass)
+  let newPassword = State.Password sname ver typ var count Nothing lname
+  pwd <- encodePassword mkey newPassword
+  if isJust lname then putStrLn $ "Your new username is: " ++ (fromJust lname)
+  else return ()
+  putStrLn $ "Your new password is: " ++ pwd
+  let newPasswords = replace (passwords st) pass newPassword
+  let newST = st { passwords = newPasswords }
+  return newST
+
+
+showTempPwd :: ManageState -> Ptr CUChar -> String -> IO ()
+showTempPwd st mkey site = showSite st mkey tempPwd where
+  tempPwd = State.Password site defaultVersion defaultSiteType defaultSiteVariant 1 Nothing Nothing
+
+replace [] _ new = [new]
+replace (x:xs) old new
+  | x == old = new : xs
+  | otherwise = x: replace xs old new
