@@ -14,9 +14,11 @@ import System.Exit
 import Data.Maybe
 import Data.List
 import Data.Char
+import Arguments
 
 main :: IO ()
 main = do
+  processCmdLine
   doesExist <- doesFileExist "mpass.db"
   runDB <- if doesExist then readDb "mpass.db"
     else do
